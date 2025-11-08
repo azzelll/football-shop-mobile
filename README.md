@@ -191,3 +191,23 @@ class HomePage extends StatelessWidget {
 }
 ```
 
+
+## Tugas 8 – Flutter Navigation, Layouts, Forms, and Input Elements
+
+### Navigator.push() vs Navigator.pushReplacement()
+- `Navigator.push()` menambahkan halaman baru ke atas stack sehingga pengguna dapat kembali ke halaman sebelumnya dengan tombol back. Pada aplikasi Football Shop, aksi tombol **Tambah Produk** memakai `push` (`football_shop/lib/menu.dart`) agar setelah form disimpan pengguna bisa kembali ke beranda untuk meninjau hasilnya atau menambah produk lain.
+- `Navigator.pushReplacement()` mengganti halaman aktif dengan halaman tujuan. Pola ini saya gunakan pada menu Drawer ketika memilih **Halaman Utama** dari halaman form (`football_shop/lib/add_product_page.dart`) supaya tidak ada duplikasi halaman di stack dan tombol back tidak membawa pengguna kembali ke form yang sama.
+
+### Hierarki Scaffold, AppBar, dan Drawer
+- Setiap layar dibangun dengan `Scaffold` untuk menyediakan struktur konsisten berupa `AppBar`, `body`, dan `drawer`. Dengan kerangka ini, beranda (`menu.dart`) dan halaman form (`add_product_page.dart`) otomatis memiliki tata letak seragam dan akses `ScaffoldMessenger` untuk SnackBar.
+- `AppBar` memberikan identitas layar serta aksi global. Warna dan tipografinya seragam karena `AppBarTheme` diatur di `football_shop/lib/main.dart`.
+- `Drawer` menjadi pintu navigasi utama ke **Halaman Utama** dan **Tambah Produk**, membuat pengalaman berpindah layar lebih intuitif.
+
+### Kelebihan Layout Widget (Padding, SingleChildScrollView, ListView)
+- `Padding` memberi ruang napas antar elemen sehingga form mudah dipindai dan tidak terasa sempit (`add_product_page.dart`).
+- `SingleChildScrollView` memastikan form tetap bisa discroll di layar kecil maupun saat keyboard muncul, mencegah overflow.
+- `GridView.count` dan `Column` membantu mengatur menu beranda menjadi kisi yang rapi, sementara `ListView` pada Drawer menampung opsi navigasi yang bisa discroll.
+
+### Penyesuaian Warna Tema untuk Identitas Toko
+- `ThemeData` di `football_shop/lib/main.dart` menyiapkan `ColorScheme` kustom (biru tua sebagai warna primer, oranye sebagai aksen) sehingga identitas visual Football Shop konsisten di seluruh layar.
+- `AppBar`, tombol, dan elemen input mewarisi skema warna ini lewat `AppBarTheme`, `ElevatedButtonThemeData`, dan `InputDecorationTheme`, menghasilkan pengalaman visual yang harmonis dengan brand toko.

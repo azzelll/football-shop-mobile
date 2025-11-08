@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:football_shop/widgets/app_drawer.dart';
+import 'package:football_shop/widgets/product_summary_dialog.dart';
 
 class AddProductPage extends StatefulWidget {
   static const routeName = '/add-product';
@@ -59,7 +60,7 @@ class _AddProductPageState extends State<AddProductPage> {
         .map((size) => size.trim())
         .where((size) => size.isNotEmpty)
         .toList();
-    final productData = _ProductFormResult(
+    final productData = ProductSummaryData(
       name: _nameController.text.trim(),
       brand: _brandController.text.trim(),
       category: _selectedCategory!,
@@ -73,61 +74,7 @@ class _AddProductPageState extends State<AddProductPage> {
       isFeatured: _isFeatured,
     );
 
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        final displaySizes =
-            productData.sizes.isEmpty ? '-' : productData.sizes.join(', ');
-        return AlertDialog(
-          title: const Text('Produk berhasil dibuat'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _DialogRow(title: 'Product Name', value: productData.name),
-              _DialogRow(title: 'Brand', value: productData.brand),
-              _DialogRow(title: 'Category', value: productData.category),
-              _DialogRow(title: 'Price (Rp)', value: 'Rp${productData.price}'),
-              _DialogRow(
-                title: 'Discount (%)',
-                value: '${productData.discount}',
-              ),
-              _DialogRow(title: 'Stock', value: '${productData.stock}'),
-              _DialogRow(
-                title: 'Rating (0-5)',
-                value: '${productData.rating}',
-              ),
-              _DialogRow(
-                title: 'Available Sizes',
-                value: displaySizes,
-              ),
-              _DialogRow(
-                title: 'Featured Product',
-                value: productData.isFeatured ? 'Yes' : 'No',
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Description',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(productData.description),
-              const SizedBox(height: 8),
-              const Text(
-                'Thumbnail Image URL',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(productData.thumbnailUrl),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup'),
-            ),
-          ],
-        );
-      },
-    );
+    showProductSummaryDialog(context, productData);
 
     _formKey.currentState!.reset();
     setState(() {
@@ -417,64 +364,4 @@ class _AddProductPageState extends State<AddProductPage> {
       ),
     );
   }
-}
-
-class _DialogRow extends StatelessWidget {
-  final String title;
-  final String value;
-
-  const _DialogRow({
-    required this.title,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProductFormResult {
-  final String name;
-  final String brand;
-  final String category;
-  final String description;
-  final int price;
-  final double discount;
-  final int stock;
-  final double rating;
-  final List<String> sizes;
-  final String thumbnailUrl;
-  final bool isFeatured;
-
-  _ProductFormResult({
-    required this.name,
-    required this.brand,
-    required this.category,
-    required this.description,
-    required this.price,
-    required this.discount,
-    required this.stock,
-    required this.rating,
-    required this.sizes,
-    required this.thumbnailUrl,
-    required this.isFeatured,
-  });
 }

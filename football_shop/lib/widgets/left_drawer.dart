@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:football_shop/config.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:football_shop/screens/menu.dart';
@@ -76,7 +77,7 @@ class LeftDrawer extends StatelessWidget {
     if (shouldLogout == true && context.mounted) {
       try {
         final response = await request.logout(
-          "http://localhost:8000/auth/logout/",
+          "$baseUrl/auth/logout/",
         );
 
         if (context.mounted) {

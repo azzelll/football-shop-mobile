@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:football_shop/config.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:football_shop/models/product_entry.dart';
@@ -20,9 +21,14 @@ class ProductListPage extends StatefulWidget {
 class _ProductListPageState extends State<ProductListPage> {
   Future<List<ProductEntry>> fetchProducts(CookieRequest request) async {
     try {
+      // PENTING: Sesuaikan URL dengan environment Anda
+      // - Android Emulator: http://10.0.2.2:8000
+      // - iOS Simulator: http://127.0.0.1:8000
+      // - Real Device: http://YOUR_COMPUTER_IP:8000
+      
       final endpoint = widget.filterByUser
-          ? 'http://localhost:8000/json/user/'
-          : 'http://localhost:8000/json/';
+          ? '$baseUrl/flutter/products/?user=me'
+          : '$baseUrl/flutter/products/';
 
       final response = await request.get(endpoint);
 
@@ -35,7 +41,7 @@ class _ProductListPageState extends State<ProductListPage> {
       return listProduct;
     } catch (e) {
       debugPrint('Error fetching products: $e');
-      return [];
+      rethrow;
     }
   }
 
@@ -47,6 +53,15 @@ class _ProductListPageState extends State<ProductListPage> {
       appBar: AppBar(
         title: Text(widget.filterByUser ? 'My Products' : 'All Products'),
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () {
+              setState(() {}); // Trigger rebuild to refresh data
+            },
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
       drawer: const LeftDrawer(),
       backgroundColor: const Color(0xFFF9FAFB),
@@ -58,40 +73,60 @@ class _ProductListPageState extends State<ProductListPage> {
           }
 
           if (snapshot.hasError) {
-            return _ErrorState(error: snapshot.error.toString());
+            return _ErrorState(
+              error: snapshot.error.toString(),
+              onRetry: () {
+                setState(() {}); // Trigger rebuild to retry
+              },
+            );
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return _EmptyState(filterByUser: widget.filterByUser);
           }
 
-          return _ProductGrid(products: snapshot.data!);
+          return RefreshIndicator(
+            onRefresh: () async {
+              setState(() {}); // Trigger rebuild to refresh
+            },
+            color: const Color(0xFF16A34A),
+            child: _ProductList(products: snapshot.data!),
+          );
         },
       ),
     );
   }
 }
 
-// Auto-refactored: Loading State Widget
+// Loading State Widget
 class _LoadingState extends StatelessWidget {
   const _LoadingState();
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             color: Color(0xFF16A34A),
             strokeWidth: 3,
           ),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 20),
+          const Text(
             'Loading products...',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
               color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Please wait',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade400,
             ),
           ),
         ],
@@ -100,11 +135,12 @@ class _LoadingState extends StatelessWidget {
   }
 }
 
-// Auto-refactored: Error State Widget
+// Error State Widget
 class _ErrorState extends StatelessWidget {
   final String error;
+  final VoidCallback onRetry;
 
-  const _ErrorState({required this.error});
+  const _ErrorState({required this.error, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -114,12 +150,20 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 80,
-              color: Colors.red.shade300,
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                size: 60,
+                color: Color(0xFFDC2626),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             const Text(
               'Failed to Load Products',
               style: TextStyle(
@@ -128,14 +172,26 @@ class _ErrorState extends StatelessWidget {
                 color: Color(0xFF111827),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
-              'Please check your connection and try again',
+              'Please check your connection\nand try again',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+              ),
             ),
           ],
         ),
@@ -144,7 +200,7 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-// Auto-refactored: Empty State Widget
+// Empty State Widget
 class _EmptyState extends StatelessWidget {
   final bool filterByUser;
 
@@ -158,12 +214,20 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 80,
-              color: Colors.grey.shade300,
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(60),
+              ),
+              child: const Icon(
+                Icons.inventory_2_outlined,
+                size: 60,
+                color: Color(0xFF9CA3AF),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Text(
               filterByUser ? 'No Products Yet' : 'No Products Available',
               style: const TextStyle(
@@ -172,11 +236,11 @@ class _EmptyState extends StatelessWidget {
                 color: Color(0xFF111827),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               filterByUser
-                  ? 'Start by adding your first product'
-                  : 'No products have been added yet',
+                  ? 'Start by adding your first product\nto showcase your items'
+                  : 'No products have been added yet\nCheck back later',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
@@ -184,13 +248,19 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             if (filterByUser) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               FilledButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add Product'),
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('Add Your First Product'),
                 onPressed: () {
                   Navigator.pushNamed(context, '/product/add');
                 },
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                ),
               ),
             ],
           ],
@@ -200,11 +270,11 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// Auto-refactored: Product Grid Widget
-class _ProductGrid extends StatelessWidget {
+// Product List Widget
+class _ProductList extends StatelessWidget {
   final List<ProductEntry> products;
 
-  const _ProductGrid({required this.products});
+  const _ProductList({required this.products});
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +288,7 @@ class _ProductGrid extends StatelessWidget {
   }
 }
 
-// Auto-refactored: Product Card Widget
+// Product Card Widget
 class _ProductCard extends StatelessWidget {
   final ProductEntry product;
 
@@ -238,6 +308,11 @@ class _ProductCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+      ),
       child: InkWell(
         onTap: () => _navigateToDetail(context),
         child: Column(
@@ -252,7 +327,7 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
-// Auto-refactored: Product Image Widget
+// Product Image Widget  
 class _ProductImage extends StatelessWidget {
   final ProductEntry product;
 
@@ -268,6 +343,18 @@ class _ProductImage extends StatelessWidget {
               ? Image.network(
                   product.fields.thumbnail,
                   fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                        color: const Color(0xFF16A34A),
+                      ),
+                    );
+                  },
                   errorBuilder: (context, error, stackTrace) {
                     return _buildPlaceholder();
                   },
@@ -276,8 +363,8 @@ class _ProductImage extends StatelessWidget {
         ),
         if (product.fields.isFeatured || product.fields.discount > 0)
           Positioned(
-            top: 8,
-            right: 8,
+            top: 12,
+            right: 12,
             child: _ProductBadges(product: product),
           ),
       ],
@@ -298,7 +385,7 @@ class _ProductImage extends StatelessWidget {
   }
 }
 
-// Auto-refactored: Product Badges Widget
+// Product Badges Widget
 class _ProductBadges extends StatelessWidget {
   final ProductEntry product;
 
@@ -311,25 +398,27 @@ class _ProductBadges extends StatelessWidget {
       children: [
         if (product.fields.isFeatured)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.white.withValues(alpha: 0.1)
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.star, size: 12, color: Color(0xFF92400E)),
+                Icon(Icons.star, size: 14, color: Color(0xFF92400E)),
                 SizedBox(width: 4),
                 Text(
                   'FEATURED',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF92400E),
                   ),
@@ -338,23 +427,24 @@ class _ProductBadges extends StatelessWidget {
             ),
           ),
         if (product.fields.discount > 0) ...[
-          if (product.fields.isFeatured) const SizedBox(height: 4),
+          if (product.fields.isFeatured) const SizedBox(height: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFFDC2626),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
             child: Text(
               '-${product.fields.discount.toStringAsFixed(0)}%',
               style: const TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -366,7 +456,7 @@ class _ProductBadges extends StatelessWidget {
   }
 }
 
-// Auto-refactored: Product Info Widget
+// Product Info Widget
 class _ProductInfo extends StatelessWidget {
   final ProductEntry product;
 
@@ -380,16 +470,16 @@ class _ProductInfo extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _ProductBrand(brand: product.fields.brand),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           _ProductName(name: product.fields.name),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _CategoryBadge(category: product.fields.categoryDisplay),
           const SizedBox(height: 12),
           if (product.fields.rating > 0) _ProductRating(product: product),
           _ProductPrice(product: product),
           const SizedBox(height: 12),
           _StockStatus(product: product),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _ProductDescription(description: product.fields.description),
         ],
       ),
@@ -397,7 +487,7 @@ class _ProductInfo extends StatelessWidget {
   }
 }
 
-// Auto-refactored: Individual Info Components
+// Individual Info Components
 class _ProductBrand extends StatelessWidget {
   final String brand;
 
@@ -411,7 +501,7 @@ class _ProductBrand extends StatelessWidget {
         fontSize: 12,
         fontWeight: FontWeight.bold,
         color: Color(0xFF6B7280),
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
       ),
     );
   }
@@ -430,6 +520,7 @@ class _ProductName extends StatelessWidget {
         fontSize: 18,
         fontWeight: FontWeight.bold,
         color: Color(0xFF111827),
+        height: 1.3,
       ),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
@@ -445,10 +536,10 @@ class _CategoryBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xFFD1FAE5),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         category,
@@ -504,13 +595,13 @@ class _ProductPrice extends StatelessWidget {
         Text(
           product.fields.formattedPrice,
           style: const TextStyle(
-            fontSize: 20,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF16A34A),
           ),
         ),
         if (product.fields.discount > 0) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Text(
             'Rp ${product.fields.price}',
             style: const TextStyle(
@@ -532,29 +623,39 @@ class _StockStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          product.fields.isInStock ? Icons.check_circle : Icons.cancel,
-          size: 16,
-          color: product.fields.isInStock
-              ? const Color(0xFF16A34A)
-              : const Color(0xFFDC2626),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          product.fields.isInStock
-              ? 'In Stock (${product.fields.stock})'
-              : 'Out of Stock',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: product.fields.isInStock
+            ? const Color(0xFFD1FAE5)
+            : const Color(0xFFFEE2E2),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            product.fields.isInStock ? Icons.check_circle : Icons.cancel,
+            size: 16,
             color: product.fields.isInStock
                 ? const Color(0xFF16A34A)
                 : const Color(0xFFDC2626),
           ),
-        ),
-      ],
+          const SizedBox(width: 6),
+          Text(
+            product.fields.isInStock
+                ? 'In Stock (${product.fields.stock})'
+                : 'Out of Stock',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: product.fields.isInStock
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFFDC2626),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

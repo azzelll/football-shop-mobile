@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:football_shop/screens/add_product_page.dart';
-import 'package:football_shop/widgets/app_drawer.dart';
+import 'package:football_shop/widgets/left_drawer.dart';
+import 'package:football_shop/screens/product_list.dart';
+import 'package:football_shop/screens/product_form.dart';
 
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
@@ -15,33 +16,44 @@ class MyHomePage extends StatelessWidget {
       ItemHomepage(
         name: 'All Products',
         icon: Icons.storefront,
-        color: Theme.of(context).colorScheme.primary,
+        color: const Color(0xFF16A34A),
         onTap: (ctx) {
-          ScaffoldMessenger.of(ctx)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(content: Text('Fitur katalog akan hadir segera!')),
-            );
+          Navigator.push(
+            ctx,
+            MaterialPageRoute(
+              builder: (context) => const ProductListPage(
+                filterByUser: false,
+              ),
+            ),
+          );
         },
       ),
       ItemHomepage(
         name: 'My Products',
         icon: Icons.inventory_2,
-        color: Colors.green,
+        color: const Color(0xFF22C55E),
         onTap: (ctx) {
-          ScaffoldMessenger.of(ctx)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(content: Text('Pantau koleksi pribadimu di sini.')),
-            );
+          Navigator.push(
+            ctx,
+            MaterialPageRoute(
+              builder: (context) => const ProductListPage(
+                filterByUser: true,
+              ),
+            ),
+          );
         },
       ),
       ItemHomepage(
         name: 'Create Product',
         icon: Icons.add_circle_outline,
-        color: Colors.red,
+        color: const Color(0xFFDC2626),
         onTap: (ctx) {
-          Navigator.pushNamed(ctx, AddProductPage.routeName);
+          Navigator.push(
+            ctx,
+            MaterialPageRoute(
+              builder: (context) => const ProductFormPage(),
+            ),
+          );
         },
       ),
     ];
@@ -49,88 +61,91 @@ class MyHomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Football Shop'),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      drawer: AppNavigationDrawer(
-        isOnHome: true,
-        onHomeSelected: () => Navigator.pushReplacementNamed(context, '/'),
-        onAddProductSelected: () =>
-            Navigator.pushReplacementNamed(context, AddProductPage.routeName),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Halo, $nama!',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Selamat datang kembali di Football Shop.',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 24),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth > 600;
-                  final cards = [
-                    InfoCard(title: 'NPM', content: npm),
-                    InfoCard(title: 'Name', content: nama),
-                    InfoCard(title: 'Class', content: kelas),
-                  ];
-                  if (isWide) {
-                    return Row(
-                      children: List.generate(
-                        cards.length,
-                        (index) => Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              right: index == cards.length - 1 ? 0 : 16,
-                            ),
-                            child: cards[index],
+      drawer: const LeftDrawer(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome Section
+            Text(
+              'Halo, $nama!',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF111827),
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Selamat datang kembali di Football Shop.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF6B7280),
+                  ),
+            ),
+            const SizedBox(height: 24),
+
+            // Info Cards
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 600;
+                final cards = [
+                  InfoCard(title: 'NPM', content: npm),
+                  InfoCard(title: 'Name', content: nama),
+                  InfoCard(title: 'Class', content: kelas),
+                ];
+
+                if (isWide) {
+                  return Row(
+                    children: List.generate(
+                      cards.length,
+                      (index) => Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right: index == cards.length - 1 ? 0 : 16,
                           ),
+                          child: cards[index],
                         ),
                       ),
-                    );
-                  }
-                  return Column(
-                    children: cards
-                        .map(
-                          (card) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: card,
-                          ),
-                        )
-                        .toList(),
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'Mulai Jelajah',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
                     ),
-              ),
-              const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: items
-                    .map(
-                      (item) => ItemCard(item: item),
-                    )
-                    .toList(),
-              ),
-            ],
-          ),
+                  );
+                }
+
+                return Column(
+                  children: cards
+                      .map(
+                        (card) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: card,
+                        ),
+                      )
+                      .toList(),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
+
+            // Menu Section
+            Text(
+              'Mulai Jelajah',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
+                  ),
+            ),
+            const SizedBox(height: 16),
+
+            // Menu Grid
+            GridView.count(
+              crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: items.map((item) => ItemCard(item: item)).toList(),
+            ),
+          ],
         ),
       ),
     );
@@ -157,14 +172,20 @@ class InfoCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF6B7280),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               content,
-              style: Theme.of(context).textTheme.bodyLarge,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF111827),
+              ),
             ),
           ],
         ),
@@ -196,11 +217,11 @@ class ItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: item.color,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         onTap: () => item.onTap(context),
-        child: Padding(
+        child: Container(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -208,7 +229,7 @@ class ItemCard extends StatelessWidget {
               Icon(
                 item.icon,
                 color: Colors.white,
-                size: 42,
+                size: 48,
               ),
               const SizedBox(height: 12),
               Text(
@@ -217,6 +238,7 @@ class ItemCard extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ],

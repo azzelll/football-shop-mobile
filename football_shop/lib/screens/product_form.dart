@@ -75,7 +75,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
     try {
       final response = await request.postJson(
-        "https://made-shandy-footballshop.pbp.cs.ui.ac.id/create-flutter/",
+        "http://127.0.0.1:8000/create-flutter/",
         jsonEncode({
           'name': _nameController.text,
           'brand': _brandController.text,
